@@ -1,0 +1,439 @@
+Imports System.IO
+Public Class Form1
+    Inherits System.Windows.Forms.Form
+
+#Region " Windows Form Designer generated code "
+
+    Public Sub New()
+        MyBase.New()
+
+        'This call is required by the Windows Form Designer.
+        InitializeComponent()
+
+        'Add any initialization after the InitializeComponent() call
+
+    End Sub
+
+    'Form overrides dispose to clean up the component list.
+    Protected Overloads Overrides Sub Dispose(ByVal disposing As Boolean)
+        If disposing Then
+            If Not (components Is Nothing) Then
+                components.Dispose()
+            End If
+        End If
+        MyBase.Dispose(disposing)
+    End Sub
+
+    'Required by the Windows Form Designer
+    Private components As System.ComponentModel.IContainer
+
+    'NOTE: The following procedure is required by the Windows Form Designer
+    'It can be modified using the Windows Form Designer.  
+    'Do not modify it using the code editor.
+    Friend WithEvents Label1 As System.Windows.Forms.Label
+    Friend WithEvents Label2 As System.Windows.Forms.Label
+    Friend WithEvents txtInputFile As System.Windows.Forms.TextBox
+    Friend WithEvents txtMontereps As System.Windows.Forms.TextBox
+    Friend WithEvents btnRun As System.Windows.Forms.Button
+    Friend WithEvents Label3 As System.Windows.Forms.Label
+    Friend WithEvents txtOutputFile As System.Windows.Forms.TextBox
+    Friend WithEvents Label4 As System.Windows.Forms.Label
+    <System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
+        Me.txtInputFile = New System.Windows.Forms.TextBox()
+        Me.Label1 = New System.Windows.Forms.Label()
+        Me.txtMontereps = New System.Windows.Forms.TextBox()
+        Me.Label2 = New System.Windows.Forms.Label()
+        Me.btnRun = New System.Windows.Forms.Button()
+        Me.Label3 = New System.Windows.Forms.Label()
+        Me.txtOutputFile = New System.Windows.Forms.TextBox()
+        Me.Label4 = New System.Windows.Forms.Label()
+        Me.SuspendLayout()
+        '
+        'txtInputFile
+        '
+        Me.txtInputFile.Location = New System.Drawing.Point(96, 88)
+        Me.txtInputFile.Name = "txtInputFile"
+        Me.txtInputFile.Size = New System.Drawing.Size(184, 20)
+        Me.txtInputFile.TabIndex = 0
+        Me.txtInputFile.Text = "\data\TraitSpacesSample.dat"
+        '
+        'Label1
+        '
+        Me.Label1.Location = New System.Drawing.Point(24, 88)
+        Me.Label1.Name = "Label1"
+        Me.Label1.Size = New System.Drawing.Size(72, 23)
+        Me.Label1.TabIndex = 1
+        Me.Label1.Text = "Input data file"
+        '
+        'txtMontereps
+        '
+        Me.txtMontereps.Location = New System.Drawing.Point(176, 232)
+        Me.txtMontereps.Name = "txtMontereps"
+        Me.txtMontereps.Size = New System.Drawing.Size(48, 20)
+        Me.txtMontereps.TabIndex = 2
+        Me.txtMontereps.Text = "1000"
+        '
+        'Label2
+        '
+        Me.Label2.Location = New System.Drawing.Point(56, 232)
+        Me.Label2.Name = "Label2"
+        Me.Label2.Size = New System.Drawing.Size(120, 23)
+        Me.Label2.TabIndex = 3
+        Me.Label2.Text = "Monte Carlo replicates"
+        '
+        'btnRun
+        '
+        Me.btnRun.Location = New System.Drawing.Point(112, 280)
+        Me.btnRun.Name = "btnRun"
+        Me.btnRun.Size = New System.Drawing.Size(75, 23)
+        Me.btnRun.TabIndex = 4
+        Me.btnRun.Text = "Run!"
+        '
+        'Label3
+        '
+        Me.Label3.Location = New System.Drawing.Point(24, 144)
+        Me.Label3.Name = "Label3"
+        Me.Label3.Size = New System.Drawing.Size(72, 23)
+        Me.Label3.TabIndex = 6
+        Me.Label3.Text = "Ouput data file"
+        '
+        'txtOutputFile
+        '
+        Me.txtOutputFile.Location = New System.Drawing.Point(96, 144)
+        Me.txtOutputFile.Name = "txtOutputFile"
+        Me.txtOutputFile.Size = New System.Drawing.Size(184, 20)
+        Me.txtOutputFile.TabIndex = 5
+        Me.txtOutputFile.Text = "\data\TraitSpaces.out"
+        '
+        'Label4
+        '
+        Me.Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label4.Location = New System.Drawing.Point(24, 16)
+        Me.Label4.Name = "Label4"
+        Me.Label4.Size = New System.Drawing.Size(240, 23)
+        Me.Label4.TabIndex = 7
+        Me.Label4.Text = "TraitSpaces Version 1.20"
+        '
+        'Form1
+        '
+        Me.AutoScaleBaseSize = New System.Drawing.Size(5, 13)
+        Me.ClientSize = New System.Drawing.Size(292, 318)
+        Me.Controls.Add(Me.Label4)
+        Me.Controls.Add(Me.Label3)
+        Me.Controls.Add(Me.txtOutputFile)
+        Me.Controls.Add(Me.btnRun)
+        Me.Controls.Add(Me.Label2)
+        Me.Controls.Add(Me.txtMontereps)
+        Me.Controls.Add(Me.Label1)
+        Me.Controls.Add(Me.txtInputFile)
+        Me.Name = "Form1"
+        Me.Text = "Form1"
+        Me.ResumeLayout(False)
+        Me.PerformLayout()
+
+    End Sub
+
+#End Region
+
+    Private Sub btnRun_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btnRun.Click
+
+        '*** TraitSpaces: Phenotype Cluster Statistical Testing
+        '*** Version 1.20   
+        '*** June 1, 2011 (tidied up for distribution July 31, 2012)
+        '*** 
+        '***
+        '*** Version 1.10 adds tests beyond "attacked morphospace restricted" test
+        '*** Version 1.20 corrects the method for making the "Interspecies Centroids Distant" test two-tailed
+        '*** July 31 2012 update only changes program name from PhenoCluster to TraitSpaces
+
+        Dim AltArray(500, 12), GigArray(500, 12), ShuffledAltArray(500, 12), ShuffledGigArray(500, 12) As Single
+        Dim AltAttackedSubspacePvalue(10), GigAttackedSubspacePvalue(10) As Single
+        Dim AltAttackedCentroidDistance, GigAttackedCentroidDistance As Single
+        Dim AltAttackedCentroidDistancePvalue(10), GigAttackedCentroidDistancePvalue(10) As Single
+        Dim AltP1Centroid(10), AltP2Centroid(10), GigP1Centroid(10), GigP2Centroid(10) As Single
+        Dim AltSpaceSize(10), GigSpaceSize(10) As Single
+        Dim Bug(500, 10) As Integer
+        Dim BugNumber As Integer
+        '    *** 1 = rhopalomyia
+        '    *** 2 = caterpillar
+        '    *** 3 = blotchmine
+        '    *** 4 = exema
+        '    *** 5  = spittlebug
+        '    *** 6 = leaftier
+        '    *** 7 = blackchryso
+        '    *** 8 = redaphid
+        '    *** 9 = lygaeid
+        '    *** 10 = leafhopper
+        Dim BugsOnAlt(10), BugsOnGig(10) As Integer
+        Dim CalcDiffP1, CalcDiffP2 As Single
+        Dim InterspeciesAttackedCentroidDistance(10) As Single
+        Dim InterspeciesAttackedCentroidDistancePvalueLarge(10), InterspeciesAttackedCentroidDistancePvalueSmall(10), InterspeciesAttackedCentroidDistancePvalue(10) As Single
+        Dim InterspeciesAttackedCentroidDistanceComparison(10) As String
+        Dim i, j As Integer
+        Dim HoldPrin1(500), HoldPrin2(500) As Single
+        Dim InputFile As String
+        InputFile = txtInputFile.Text
+        Dim LineOfText As String
+        Dim MeanMonteInterspeciesAttackedCentroidDistance(10) As Single
+        Dim Monte, NumberOfMonte As Integer
+        NumberOfMonte = txtMontereps.Text
+        Dim MonteAltP1Centroid(NumberOfMonte, 10), MonteAltP2Centroid(NumberOfMonte, 10), MonteGigP1Centroid(NumberOfMonte, 10), MonteGigP2Centroid(NumberOfMonte, 10) As Single
+        Dim MonteAltSpaceSize(NumberOfMonte, 10), MonteGigSpaceSize(NumberOfMonte, 10) As Single
+        Dim MonteAltAttackedCentroidDistance, MonteGigAttackedCentroidDistance As Single
+        Dim MonteInterspeciesAttackedCentroidDistance As Single
+        Dim NumberOfAlt, NumberOfGig, NumberOfPlants As Integer
+        Dim Outputfile As StreamWriter
+        Outputfile = File.CreateText(txtOutputFile.Text)
+        Dim PlantNumber As Integer '***this is the integer count of plants read in
+        Dim PlantRef(500) As Single '***this is the reference number from the database
+        Dim Species(500) As String
+        Dim SumAltDistances, SumGigDistances As Single
+        Dim Prin1 As Integer = 11    '***column ref for prin1 in altarray and gigarray; bugs are columns 1-10
+        Dim Prin2 As Integer = 12
+        Dim VersionNumber As String = "1.20"
+
+        '*** open file and read in data; set up output file headers
+        FileOpen(1, InputFile, OpenMode.Input)
+        While Not EOF(1)
+            PlantNumber = PlantNumber + 1
+            Input(1, PlantRef(PlantNumber))
+            Input(1, Species(PlantNumber))
+            Input(1, HoldPrin1(PlantNumber))
+            Input(1, HoldPrin2(PlantNumber))
+            For BugNumber = 1 To 10
+                Input(1, Bug(PlantNumber, BugNumber))
+             Next BugNumber
+        End While
+        NumberOfPlants = PlantNumber
+      
+
+        '***
+        '*** load data into separate alt and gig arrays, 
+        '*** and find number of alt and gig plants
+        '***
+        For i = 1 To NumberOfPlants
+            If Species(i) = "a" Then
+                NumberOfAlt = NumberOfAlt + 1
+                AltArray(NumberOfAlt, Prin1) = HoldPrin1(i)
+                AltArray(NumberOfAlt, Prin2) = HoldPrin2(i)
+                For BugNumber = 1 To 10
+                    AltArray(NumberOfAlt, BugNumber) = Bug(i, BugNumber)
+                    BugsOnAlt(BugNumber) = BugsOnAlt(BugNumber) + AltArray(NumberOfAlt, BugNumber)
+                Next BugNumber
+            Else
+                NumberOfGig = NumberOfGig + 1
+                GigArray(NumberOfGig, Prin1) = HoldPrin1(i)
+                GigArray(NumberOfGig, Prin2) = HoldPrin2(i)
+                For BugNumber = 1 To 10
+                    GigArray(NumberOfGig, BugNumber) = Bug(i, BugNumber)
+                    BugsOnGig(BugNumber) = BugsOnGig(BugNumber) + GigArray(NumberOfGig, BugNumber)
+                Next BugNumber
+            End If
+        Next i
+        '*** load bugnumber=0 column with all 1s, to allow calculation of total morphospace
+        For i = 1 To NumberOfAlt
+            AltArray(i, 0) = 1
+        Next i
+        For i = 1 To NumberOfGig
+            GigArray(i, 0) = 1
+        Next i
+
+        '***
+        '*** find centroid and size of total and attacked morphospaces for each plant species and each insect
+        '***
+        For BugNumber = 0 To 10
+            '***0 is for total plant space
+            Call Morphospace(AltArray, NumberOfAlt, BugNumber, AltP1Centroid(BugNumber), AltP2Centroid(BugNumber), AltSpaceSize(BugNumber))
+            Call Morphospace(GigArray, NumberOfGig, BugNumber, GigP1Centroid(BugNumber), GigP2Centroid(BugNumber), GigSpaceSize(BugNumber))
+            InterspeciesAttackedCentroidDistance(BugNumber) = Distance(AltP1Centroid(BugNumber), AltP2Centroid(BugNumber), GigP1Centroid(BugNumber), GigP2Centroid(BugNumber))
+        Next BugNumber
+
+        '***
+        '*** conduct randomizations for attacked space
+        '***
+
+        For Monte = 1 To NumberOfMonte
+            Call Shuffle(AltArray, NumberOfAlt, ShuffledAltArray)
+            Call Shuffle(GigArray, NumberOfGig, ShuffledGigArray)
+            For BugNumber = 1 To 10
+                Call Morphospace(ShuffledAltArray, NumberOfAlt, BugNumber, MonteAltP1Centroid(Monte, BugNumber), MonteAltP2Centroid(Monte, BugNumber), MonteAltSpaceSize(Monte, BugNumber))
+                Call Morphospace(ShuffledGigArray, NumberOfGig, BugNumber, MonteGigP1Centroid(Monte, BugNumber), MonteGigP2Centroid(Monte, BugNumber), MonteGigSpaceSize(Monte, BugNumber))
+            Next BugNumber
+        Next
+        '*** Monte arrays now hold 1,000 (or another user-defined number) of randomized centroids and attacked-space sizes
+
+        For BugNumber = 1 To 10
+            For Monte = 1 To NumberOfMonte
+                '*** calculate distances between centroids (intraspecific attacked vs. all, and interspecific attacked vs. attacked)
+                AltAttackedCentroidDistance = Distance(AltP1Centroid(BugNumber), AltP2Centroid(BugNumber), AltP1Centroid(0), AltP2Centroid(0))
+                GigAttackedCentroidDistance = Distance(GigP1Centroid(BugNumber), GigP2Centroid(BugNumber), GigP1Centroid(0), GigP2Centroid(0))
+
+                '*** count for Attacked Morphospace Restricted test
+                If AltSpaceSize(BugNumber) >= MonteAltSpaceSize(Monte, BugNumber) Then
+                    AltAttackedSubspacePvalue(BugNumber) = AltAttackedSubspacePvalue(BugNumber) + 1
+                End If
+                If GigSpaceSize(BugNumber) >= MonteGigSpaceSize(Monte, BugNumber) Then
+                    GigAttackedSubspacePvalue(BugNumber) = GigAttackedSubspacePvalue(BugNumber) + 1
+                End If
+
+                '*** count for Attacked Morphospace Noncentral test
+                MonteAltAttackedCentroidDistance = Distance(MonteAltP1Centroid(Monte, BugNumber), MonteAltP2Centroid(Monte, BugNumber), AltP1Centroid(0), AltP2Centroid(0))
+                If MonteAltAttackedCentroidDistance >= AltAttackedCentroidDistance Then AltAttackedCentroidDistancePvalue(BugNumber) = AltAttackedCentroidDistancePvalue(BugNumber) + 1
+                MonteGigAttackedCentroidDistance = Distance(MonteGigP1Centroid(Monte, BugNumber), MonteGigP2Centroid(Monte, BugNumber), GigP1Centroid(0), GigP2Centroid(0))
+                If MonteGigAttackedCentroidDistance >= GigAttackedCentroidDistance Then GigAttackedCentroidDistancePvalue(BugNumber) = GigAttackedCentroidDistancePvalue(BugNumber) + 1
+
+                '*** count for Interspecies Centroids Distant test
+                MonteInterspeciesAttackedCentroidDistance = Distance(MonteAltP1Centroid(Monte, BugNumber), MonteAltP2Centroid(Monte, BugNumber), MonteGigP1Centroid(Monte, BugNumber), MonteGigP2Centroid(Monte, BugNumber))
+                If MonteInterspeciesAttackedCentroidDistance >= InterspeciesAttackedCentroidDistance(BugNumber) Then InterspeciesAttackedCentroidDistancePvalueLarge(BugNumber) = InterspeciesAttackedCentroidDistancePvalueLarge(BugNumber) + 1
+                If MonteInterspeciesAttackedCentroidDistance <= InterspeciesAttackedCentroidDistance(BugNumber) Then InterspeciesAttackedCentroidDistancePvalueSmall(BugNumber) = InterspeciesAttackedCentroidDistancePvalueSmall(BugNumber) + 1
+
+                '*** determine mean value of randomized InterspeciesAttackedCentroidDistance, for later use in two-tailed test
+                MeanMonteInterspeciesAttackedCentroidDistance(BugNumber) = MeanMonteInterspeciesAttackedCentroidDistance(BugNumber) + MonteInterspeciesAttackedCentroidDistance
+            Next Monte
+            AltAttackedSubspacePvalue(BugNumber) = AltAttackedSubspacePvalue(BugNumber) / NumberOfMonte
+            GigAttackedSubspacePvalue(BugNumber) = GigAttackedSubspacePvalue(BugNumber) / NumberOfMonte
+            AltAttackedCentroidDistancePvalue(BugNumber) = AltAttackedCentroidDistancePvalue(BugNumber) / NumberOfMonte
+            GigAttackedCentroidDistancePvalue(BugNumber) = GigAttackedCentroidDistancePvalue(BugNumber) / NumberOfMonte
+
+            '*** make Interspecies Centroids Distance test two-tailed
+            MeanMonteInterspeciesAttackedCentroidDistance(BugNumber) = MeanMonteInterspeciesAttackedCentroidDistance(BugNumber) / NumberOfMonte
+            If InterspeciesAttackedCentroidDistance(BugNumber) > MeanMonteInterspeciesAttackedCentroidDistance(BugNumber) Then
+                InterspeciesAttackedCentroidDistancePvalue(BugNumber) = 2 * InterspeciesAttackedCentroidDistancePvalueLarge(BugNumber) / NumberOfMonte
+                InterspeciesAttackedCentroidDistanceComparison(BugNumber) = "Large"
+            Else
+                InterspeciesAttackedCentroidDistancePvalue(BugNumber) = 2 * InterspeciesAttackedCentroidDistancePvalueSmall(BugNumber) / NumberOfMonte
+                InterspeciesAttackedCentroidDistanceComparison(BugNumber) = "Small"
+            End If
+
+        Next BugNumber
+
+
+        '*** 
+        '*** output
+        '***
+        Outputfile.WriteLine()
+        LineOfText = "Executed " & Date.Now & " using PhenoCluster version " & VersionNumber
+        Outputfile.WriteLine(LineOfText)
+        Outputfile.WriteLine()
+        Outputfile.WriteLine("Data input from " & InputFile)
+        Outputfile.WriteLine("Number of resamplings: " & NumberOfMonte.ToString)
+        Outputfile.WriteLine()
+
+        Outputfile.WriteLine("Altissima: " & NumberOfAlt.ToString & " plants.      Gigantea: " & NumberOfGig.ToString & " plants")
+        Outputfile.WriteLine()
+        Outputfile.WriteLine("Altissima: centroidP1 " & Format(AltP1Centroid(0), "0.000").ToString & ",  centroidP2 " & Format(AltP2Centroid(0), "0.000").ToString & "; attacked space size " & Format(AltSpaceSize(0), "###0.000").ToString)
+        Outputfile.WriteLine("Gigantea:  centroidP1 " & Format(GigP1Centroid(0), "0.000").ToString & ",  centroidP2 " & Format(GigP2Centroid(0), "0.000").ToString & "; attacked space size " & Format(GigSpaceSize(0), "###0.000").ToString)
+        Outputfile.WriteLine()
+
+        Outputfile.WriteLine("Bug       Plant    #attacks    AttSpace    P(<avail)   CentroidP1  CentroidP2   DiffP1    DiffP2   P(central)   InterCentDist  P(InterCentDiff)")
+        For BugNumber = 1 To 10
+            LineOfText = BugNumber.ToString.PadRight(10) & "alt         " & BugsOnAlt(BugNumber).ToString.PadRight(9)
+            LineOfText = LineOfText & Format(AltSpaceSize(BugNumber), "###0.000").ToString.PadRight(13) & AltAttackedSubspacePvalue(BugNumber).ToString.PadRight(13)
+            LineOfText = LineOfText & Format(AltP1Centroid(BugNumber), "#0.000").ToString.PadRight(12) & Format(AltP2Centroid(BugNumber), "#0.000").ToString.PadRight(11)
+            CalcDiffP1 = AltP1Centroid(BugNumber) - AltP1Centroid(0)
+            CalcDiffP2 = AltP2Centroid(BugNumber) - AltP2Centroid(0)
+            LineOfText = LineOfText & Format(CalcDiffP1, "###0.000").ToString.PadRight(10) & Format(CalcDiffP2, "###0.000").ToString.PadRight(10)
+            LineOfText = LineOfText & Format(AltAttackedCentroidDistancePvalue(BugNumber), "#0.000").ToString.PadRight(15)
+            LineOfText = LineOfText & InterspeciesAttackedCentroidDistanceComparison(BugNumber).PadRight(17) & Format(InterspeciesAttackedCentroidDistancePvalue(BugNumber), "#0.000").ToString
+            Outputfile.WriteLine(LineOfText)
+
+            LineOfText = BugNumber.ToString.PadRight(10) & "gig         " & BugsOnGig(BugNumber).ToString.PadRight(9)
+            LineOfText = LineOfText & Format(GigSpaceSize(BugNumber), "###0.000").ToString.PadRight(13) & GigAttackedSubspacePvalue(BugNumber).ToString.PadRight(13)
+            LineOfText = LineOfText & Format(GigP1Centroid(BugNumber), "#0.000").ToString.PadRight(12) & Format(GigP2Centroid(BugNumber), "#0.000").ToString.PadRight(11)
+            CalcDiffP1 = GigP1Centroid(BugNumber) - GigP1Centroid(0)
+            CalcDiffP2 = GigP2Centroid(BugNumber) - GigP2Centroid(0)
+            LineOfText = LineOfText & Format(CalcDiffP1, "###0.000").ToString.PadRight(10) & Format(CalcDiffP2, "###0.000").ToString.PadRight(10)
+            LineOfText = LineOfText & Format(GigAttackedCentroidDistancePvalue(BugNumber), "#0.000").ToString.PadRight(15)
+            Outputfile.WriteLine(LineOfText)
+        Next BugNumber
+        Outputfile.WriteLine()
+
+        Outputfile.Close()
+        End
+    End Sub
+
+    Function Distance(ByVal x1 As Single, ByVal y1 As Single, ByVal x2 As Single, ByVal y2 As Single) As Single
+        Distance = ((x1 - x2) ^ 2 + (y1 - y2) ^ 2) ^ 0.5
+    End Function
+
+
+    Sub Morphospace(ByVal AttackArray As Array, ByVal ArrayLength As Integer, ByVal BugNumber As Integer, ByRef P1Centroid As Single, ByRef P2Centroid As Single, ByRef SpaceSize As Single)
+        '***
+        '*** for a given attack array (AltArray or GigArray) and for a given bug (bug = 0 means for all plants), 
+        '*** sub calculates and returns the centroid co-ordinates and morphospace size of attacked plants
+        '***
+
+        '***
+        '*** variable declarations mirror what's in the main code
+        '***
+        Dim CalcDistance As Single
+        Dim i As Integer
+        Dim Prin1 As Integer = 11
+        Dim Prin2 As Integer = 12
+        Dim AttackedCount As Integer
+
+        For i = 1 To ArrayLength
+            If AttackArray(i, BugNumber) > 0 Then
+                P1Centroid = P1Centroid + AttackArray(i, Prin1)
+                P2Centroid = P2Centroid + AttackArray(i, Prin2)
+                AttackedCount = AttackedCount + 1
+            End If
+        Next i
+        P1Centroid = P1Centroid / AttackedCount
+        P2Centroid = P2Centroid / AttackedCount
+        'MessageBox.Show(ArrayLength)
+        'MessageBox.Show(P1Centroid)
+        'MessageBox.Show(P2Centroid)
+
+        For i = 1 To ArrayLength
+            If AttackArray(i, BugNumber) > 0 Then
+                CalcDistance = Distance(AttackArray(i, Prin1), AttackArray(i, Prin2), P1Centroid, P2Centroid)
+                '*** old formula ((AttackArray(i, Prin1) - P1Centroid) ^ 2 + (AttackArray(i, Prin2) - P2Centroid) ^ 2) ^ 0.5
+                SpaceSize = SpaceSize + CalcDistance
+            End If
+        Next i
+        'MessageBox.Show(SpaceSize)
+
+    End Sub
+
+    Sub Shuffle(ByVal AttackArray As Array, ByVal ArrayLength As Integer, ByRef ShuffledArray As Array)
+        '***
+        '*** randomly shuffles 'attacked' or 'unattacked' designations among plants for each bug
+        '***
+
+        '***
+        '*** variable declarations mirror what's in the main code
+        '***
+        Dim PlantNumber, BugNumber As Integer
+        Dim RandomPlantNumber As Integer
+        Randomize()
+
+        ShuffledArray = AttackArray
+
+        For PlantNumber = 1 To ArrayLength
+            RandomPlantNumber = CInt(Int((ArrayLength * Rnd()) + 1))
+            For BugNumber = 1 To 10
+                SwapSingle(ShuffledArray(PlantNumber, BugNumber), ShuffledArray(RandomPlantNumber, BugNumber))
+            Next BugNumber
+        Next PlantNumber
+
+    End Sub
+
+    Sub SwapSingle(ByRef item1, ByRef item2)
+        '***
+        '*** items are of type single
+        '***
+        Dim holder As Single
+        holder = item1
+        item1 = item2
+        item2 = holder
+    End Sub
+
+    Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+
+    End Sub
+
+    Private Sub Label4_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Label4.Click
+
+    End Sub
+End Class
